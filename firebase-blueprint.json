@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "dailyTheme": { "type": "string" },
+        "postsPerDay": { 
+          "type": "object",
+          "properties": {
+            "twitter": { "type": "integer" },
+            "linkedin": { "type": "integer" },
+            "instagram": { "type": "integer" },
+            "facebook": { "type": "integer" },
+            "reddit": { "type": "integer" },
+            "threads": { "type": "integer" }
+          }
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "SocialConnection": {
+      "title": "Social Connection",
+      "description": "Linked social media account",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "platform": { "type": "string", "enum": ["twitter", "linkedin", "instagram", "facebook", "reddit", "threads"] },
+        "platformUserId": { "type": "string" },
+        "accessToken": { "type": "string" },
+        "refreshToken": { "type": "string" },
+        "expiresAt": { "type": "number" },
+        "profileName": { "type": "string" },
+        "profileImage": { "type": "string" }
+      },
+      "required": ["userId", "platform", "accessToken"]
+    },
+    "ScheduledPost": {
+      "title": "Scheduled Post",
+      "description": "A post scheduled for social media",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "platforms": { "type": "array", "items": { "type": "string" } },
+        "scheduledTime": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "posted", "failed"] },
+        "aiGenerated": { "type": "boolean" },
+        "error": { "type": "string" }
+      },
+      "required": ["userId", "content", "platforms", "scheduledTime", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User documents"
+    },
+    "/users/{userId}/connections/{connectionId}": {
+      "schema": "SocialConnection",
+      "description": "Social media connections for a user"
+    },
+    "/users/{userId}/posts/{postId}": {
+      "schema": "ScheduledPost",
+      "description": "Scheduled posts for a user"
+    }
+  }
+}

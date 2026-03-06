@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string &&
+             (!('dailyTheme' in data) || data.dailyTheme is string) &&
+             (!('postsPerDay' in data) || data.postsPerDay is map);
+    }
+
+    function isValidConnection(data) {
+      return data.keys().hasAll(['userId', 'platform', 'accessToken']) &&
+             data.userId == request.auth.uid &&
+             data.platform in ['twitter', 'linkedin', 'instagram', 'facebook', 'reddit', 'threads'];
+    }
+
+    function isValidPost(data) {
+      return data.keys().hasAll(['userId', 'content', 'platforms', 'scheduledTime', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.platforms is list &&
+             data.status in ['pending', 'posted', 'failed'];
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      
+      match /connections/{connectionId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidConnection(request.resource.data);
+        allow update: if isOwner(userId) && isValidConnection(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+      
+      match /posts/{postId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidPost(request.resource.data);
+        allow update: if isOwner(userId) && isValidPost(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
